@@ -1,5 +1,22 @@
 #!/bin/bash
 
+# NIRI install
+dnf -y copr enable yalter/niri-git
+dnf -y copr disable yalter/niri-git
+echo "priority=1" | tee -a /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:yalter:niri-git.repo
+dnf -y --enablerepo copr:copr.fedorainfracloud.org:yalter:niri-git \
+  install --setopt=install_weak_deps=False \
+  niri
+rm -rf /usr/share/doc/niri
+
+# Quickshell install
+dnf -y copr enable avengemedia/danklinux
+dnf -y copr disable avengemedia/danklinux
+dnf -y --enablerepo copr:copr.fedorainfracloud.org:avengemedia:danklinux install quickshell-git
+
+# DMS Install
+dnf -y copr enable avengemedia/dms-git
+dnf -y copr disable avengemedia/dms-gi
 dnf -y \
   --enablerepo copr:copr.fedorainfracloud.org:avengemedia:dms-git \
   --enablerepo copr:copr.fedorainfracloud.org:avengemedia:danklinux \
