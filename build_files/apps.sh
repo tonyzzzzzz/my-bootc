@@ -1,7 +1,14 @@
 #!/bin/bash
 
-dnf -y copr enable avengemedia/dms
-dnf -y install niri dms
+dnf -y \
+  --enablerepo copr:copr.fedorainfracloud.org:avengemedia:dms-git \
+  --enablerepo copr:copr.fedorainfracloud.org:avengemedia:danklinux \
+  install --setopt=install_weak_deps=False \
+  dms \
+  dms-cli \
+  dms-greeter \
+  dgop \
+  dsearch
 
 dnf -y install \
   brightnessctl \
@@ -42,3 +49,22 @@ rm -f /usr/share/applications/fcitx5-wayland-launcher.desktop
 rm -f /usr/share/applications/org.fcitx.Fcitx5*.desktop
 
 rm -rf /usr/share/doc/just
+
+install -Dpm0644 -t /usr/lib/pam.d/ /usr/share/quickshell/dms/assets/pam/*
+
+dnf install -y \
+  default-fonts-core-emoji \
+  google-noto-color-emoji-fonts \
+  google-noto-emoji-fonts \
+  glibc-all-langpacks \
+  default-fonts
+
+cp -avf "/ctx/files"/. /
+
+systemctl enable greetd
+systemctl enable firewalld
+
+tee /usr/lib/sysusers.d/greeter.conf <<'EOF'
+g greeter 767
+u greeter 767 "Greetd greeter"
+EOF

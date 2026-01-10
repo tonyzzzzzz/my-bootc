@@ -1,0 +1,2 @@
+enable dms.service
+enable fcitx5.service
