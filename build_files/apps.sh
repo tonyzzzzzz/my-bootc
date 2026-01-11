@@ -60,7 +60,9 @@ dnf -y install \
   xdg-desktop-portal-gnome \
   xdg-desktop-portal-gtk \
   xdg-user-dirs \
-  xwayland-satellite
+  xwayland-satellite \
+  zsh \
+  alacritty
 
 rm -f /usr/share/applications/fcitx5-wayland-launcher.desktop
 rm -f /usr/share/applications/org.fcitx.Fcitx5*.desktop
