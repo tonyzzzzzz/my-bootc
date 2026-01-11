@@ -82,6 +82,10 @@ cp -avf "/ctx/files"/. /
 
 systemctl enable greetd
 systemctl enable firewalld
+systemctl enable --global dms.service
+systemctl enable --global fcitx5.service
+systemctl enable --global gnome-keyring-daemon.service
+systemctl enable --global gnome-keyring-daemon.socket
 
 tee /usr/lib/sysusers.d/greeter.conf <<'EOF'
 g greeter 767
