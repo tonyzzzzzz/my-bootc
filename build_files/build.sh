@@ -42,6 +42,7 @@ dnf -y install \
   cups \
   cups-pk-helper \
   dymo-cups-drivers \
+  distrobox \
   firewalld \
   fprintd \
   fprintd-pam \

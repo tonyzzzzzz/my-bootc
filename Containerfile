@@ -29,6 +29,7 @@ FROM quay.io/fedora/fedora-bootc:43
 ### MODIFICATIONS
 ## make modifications desired in your image and install packages by modifying the build.sh script
 ## the following RUN directive does all the things required to run "build.sh" as recommended.
+COPY --from=ghcr.io/ublue-os/brew:latest /system_files /
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache \
