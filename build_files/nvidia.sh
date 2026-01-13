@@ -9,7 +9,7 @@ options nouveau modeset=0
 EOF
 
 tee /usr/lib/bootc/kargs.d/00-nvidia.toml <<'EOF'
-kargs = ["rd.driver.blacklist=nouveau", "modprobe.blacklist=nouveau", "nvidia-drm.modeset=1"]
+kargs = ["i915.enable_dpcd_backlight=1", "nvidia.NVreg_EnableBacklightHandler=0", "nvidia.NVreg_RegistryDwords=EnableBrightnessControl=0", "rd.driver.blacklist=nouveau", "modprobe.blacklist=nouveau", "nvidia-drm.modeset=1"]
 EOF
 
 dnf -y copr enable lukenukem/asus-linux
