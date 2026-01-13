@@ -12,6 +12,10 @@ tee /usr/lib/bootc/kargs.d/00-nvidia.toml <<'EOF'
 kargs = ["rd.driver.blacklist=nouveau", "modprobe.blacklist=nouveau", "nvidia-drm.modeset=1"]
 EOF
 
+dnf -y copr enable lukenukem/asus-linux
+dnf -y copr disable lukenukem/asus-linux
+dnf -y --enablerepo copr:copr.fedorainfracloud.org:lukenukem:asus-linux install asusctl supergfxctl
+
 dnf config-manager addrepo --from-repofile=https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
 dnf config-manager setopt nvidia-container-toolkit.enabled=0
 dnf config-manager setopt nvidia-container-toolkit.gpgcheck=1
@@ -37,5 +41,6 @@ ExecStart=/usr/bin/nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
 WantedBy=multi-user.target
 EOF
 
+systemctl enable supergfxd.service
 systemctl enable nvctk-cdi.service
 systemctl enable nvidia-hibernate.service nvidia-suspend.service nvidia-resume.service nvidia-powerd.service
