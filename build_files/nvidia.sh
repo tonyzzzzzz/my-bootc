@@ -35,7 +35,7 @@ options nouveau modeset=0
 EOF
 
 tee /usr/lib/bootc/kargs.d/00-nvidia.toml <<'EOF'
-kargs = ["rd.driver.blacklist=nouveau", "modprobe.blacklist=nouveau", "nvidia-drm.modeset=1"]
+kargs = ["rd.driver.blacklist=nouveau", "modprobe.blacklist=nouveau", "nvidia-drm.modeset=1", "nvidia.modeset=1", "nvidia.fbdev=1"]
 EOF
 
 # Universal Blue specific Initramfs fixes
