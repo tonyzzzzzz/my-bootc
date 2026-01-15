@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-if [[ ! "${BUILD_FLAVOR}" =~ "nvidia" ]]; then
-  exit 0
-fi
-
 set -xeuo pipefail
 
 KERNEL_VERSION="$(find "/usr/lib/modules" -maxdepth 1 -type d ! -path "/usr/lib/modules" -exec basename '{}' ';' | sort | tail -n 1)"
