@@ -33,7 +33,7 @@ dnf -y install \
   chezmoi \
   ddcutil \
   fastfetch \
-  fcitx5-mozc \
+  fcitx5-chinese-addons \
   flatpak \
   fpaste \
   fzf \
