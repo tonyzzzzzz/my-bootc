@@ -69,6 +69,10 @@ dnf -y copr enable lukenukem/asus-linux
 dnf -y copr disable lukenukem/asus-linux
 dnf -y --enablerepo copr:copr.fedorainfracloud.org:lukenukem:asus-linux install asusctl supergfxctl
 
+dnf -y copr enable sunwire/envycontrol
+dnf -y copr disable sunwire/envycontrol
+dnf -y --enablerepo copr:copr.fedorainfracloud.org:sunwire:envycontrol install envycontrol
+
 systemctl enable supergfxd.service
 systemctl enable nvctk-cdi.service
 systemctl enable nvidia-hibernate.service nvidia-suspend.service nvidia-resume.service nvidia-powerd.service
