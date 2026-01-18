@@ -72,6 +72,7 @@ rm -f /usr/share/applications/org.fcitx.Fcitx5*.desktop
 rm -rf /usr/share/doc/just
 
 install -Dpm0644 -t /usr/lib/pam.d/ /usr/share/quickshell/dms/assets/pam/*
+sed --sandbox -i -e '/gnome_keyring.so/ s/-auth/auth/ ; /gnome_keyring.so/ s/-session/session/' /etc/pam.d/greetd
 
 dnf install -y \
   default-fonts-core-emoji \
@@ -80,16 +81,14 @@ dnf install -y \
   glibc-all-langpacks \
   default-fonts
 
-cp -avf "/ctx/files"/. /
+fc-cache --force --really-force --system-only --verbose # recreate font-cache to pick up the added fonts
 
 systemctl enable greetd
 systemctl enable firewalld
+
+cp -avf "/ctx/files"/. /
+
 systemctl enable --global dms.service
 systemctl enable --global fcitx5.service
 systemctl enable --global gnome-keyring-daemon.service
 systemctl enable --global gnome-keyring-daemon.socket
-
-tee /usr/lib/sysusers.d/greeter.conf <<'EOF'
-g greeter 767
-u greeter 767 "Greetd greeter"
-EOF

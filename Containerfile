@@ -58,7 +58,8 @@ RUN --mount=type=cache,dst=/var/cache \
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     /ctx/build/nvidia.sh
 
-
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    /ctx/build/cleanup.sh
 
 ### LINTING
 ## Verify final image and contents are correct.
