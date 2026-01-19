@@ -78,8 +78,7 @@ sed --sandbox -i -e '/gnome_keyring.so/ s/-auth/auth/ ; /gnome_keyring.so/ s/-se
 
 dnf install -y \
   default-fonts-core-emoji \
-  google-noto-color-emoji-fonts \
-  google-noto-emoji-fonts \
+  google-noto-fonts-all \
   glibc-all-langpacks \
   default-fonts
 
