@@ -45,6 +45,7 @@ dnf -y install \
   firewalld \
   fprintd \
   fprintd-pam \
+  wget \
   fuse \
   fuse-common \
   fwupd \
