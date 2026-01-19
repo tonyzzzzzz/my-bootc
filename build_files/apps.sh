@@ -66,6 +66,8 @@ dnf -y install \
   neovim \
   distrobox
 
+dnf install -y adobe-source-han-sans-cn-fonts adobe-source-han-sans-tw-fonts
+
 rm -f /usr/share/applications/fcitx5-wayland-launcher.desktop
 rm -f /usr/share/applications/org.fcitx.Fcitx5*.desktop
 
