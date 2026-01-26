@@ -78,6 +78,7 @@ rm -f /usr/share/applications/org.fcitx.Fcitx5*.desktop
 rm -rf /usr/share/doc/just
 
 install -Dpm0644 -t /usr/lib/pam.d/ /usr/share/quickshell/dms/assets/pam/*
+
 sed --sandbox -i -e '/gnome_keyring.so/ s/-auth/auth/ ; /gnome_keyring.so/ s/-session/session/' /etc/pam.d/greetd
 
 dnf install -y \
@@ -85,6 +86,12 @@ dnf install -y \
   google-noto-fonts-all \
   glibc-all-langpacks \
   default-fonts
+
+dnf install -y --setopt=install_weak_deps=False \
+  kf6-kirigami \
+  qt6ct \
+  plasma-breeze \
+  kf6-qqc2-desktop-style
 
 fc-cache --force --really-force --system-only --verbose # recreate font-cache to pick up the added fonts
 
