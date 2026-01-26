@@ -65,6 +65,9 @@ dnf -y install \
   alacritty \
   neovim
 
+dnf -y config-manager addrepo --from-repofile=https://pkgs.tailscale.com/stable/fedora/tailscale.repo
+dnf install tailscale
+
 curl -s https://raw.githubusercontent.com/89luca89/distrobox/main/install | sudo sh
 
 dnf install -y adobe-source-han-sans-cn-fonts adobe-source-han-sans-tw-fonts
@@ -94,3 +97,4 @@ systemctl enable --global dms.service
 systemctl enable --global fcitx5.service
 systemctl enable --global gnome-keyring-daemon.service
 systemctl enable --global gnome-keyring-daemon.socket
+systemctl enable --global tailscaled
