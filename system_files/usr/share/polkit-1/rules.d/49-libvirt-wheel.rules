@@ -1,0 +1,14 @@
+// Allow administrators (wheel) to manage libvirt without a password prompt.
+//
+// Fedora's own 50-libvirt.rules only grants this to the 'libvirt' group, which
+// would mean running `usermod -aG libvirt <user>` by hand on every machine.
+// Group membership is runtime state that an image cannot set, so grant it to
+// wheel instead -- the same group that already has full sudo.
+//
+// Evaluated before 50-libvirt.rules; polkit takes the first rule that returns.
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.libvirt.unix.manage" &&
+        subject.isInGroup("wheel")) {
+        return polkit.Result.YES;
+    }
+});

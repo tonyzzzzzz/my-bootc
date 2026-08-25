@@ -104,10 +104,27 @@ jobs:
           sep-tags: " "
           sep-annotations: " "
 
+      # The private half of the Secure Boot signing key. Written to a file
+      # because buildah's --secret takes a path. It is passed as a secret mount,
+      # so it never becomes part of an image layer.
+      - name: Stage MOK signing key
+        env:
+          MOK_PRIVATE_KEY: ${{ secrets.MOK_PRIVATE_KEY }}
+        run: |
+          if [ -z "${MOK_PRIVATE_KEY}" ]; then
+            echo "::error::MOK_PRIVATE_KEY secret is not set. NVIDIA modules would"
+            echo "::error::ship unsigned and Secure Boot would break. See docs/secureboot.md."
+            exit 1
+          fi
+          install -m0600 /dev/null "${RUNNER_TEMP}/mok.key"
+          printf '%s' "${MOK_PRIVATE_KEY}" > "${RUNNER_TEMP}/mok.key"
+
       - name: Build Image
         id: build_image
         uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
         with:
+          extra-args: |
+            --secret=id=mok_key,src=${{ runner.temp }}/mok.key
           containerfiles: |
             ./Containerfile
           # Postfix image name with -custom to make it a little more descriptive
@@ -116,6 +133,18 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           oci: false
+
+      # Smoke test the image BEFORE it is pushed. `latest` is published on a daily
+      # cron and the workstation applies it unattended, so a broken build must fail
+      # here rather than at the next reboot.
+      - name: Verify image
+        run: |
+          set -euo pipefail
+          podman run --rm \
+            --entrypoint /bin/bash \
+            -v "${PWD}/tests:/tests:ro,z" \
+            "${{ steps.build_image.outputs.image-with-tag }}" \
+            /tests/verify-image.sh
 
       # Rechunk is a script that we use on Universal Blue to make sure there isnt a single huge layer when your image gets published.
       # This does not make your image faster to download, just provides better resumability and fixes a few errors.

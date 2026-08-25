@@ -63,7 +63,6 @@ dnf -y install \
   iwlwifi-dvm-firmware \
   iwlwifi-mvm-firmware \
   jmtpfs \
-  kernel-modules-extra \
   libcamera{,-{v4l2,gstreamer,tools}} \
   libimobiledevice \
   libimobiledevice-utils \
@@ -100,13 +99,22 @@ dnf -y install \
   wireguard-tools \
   zram-generator-defaults
 
+# Pin to the kernel already in the base image. Unpinned, this can drag in a
+# second kernel, and the nvidia akmod would then be built against the wrong one.
+KERNEL_NEVRA="$(rpm -q --queryformat '%{VERSION}-%{RELEASE}' kernel-core)"
+dnf -y install "kernel-modules-extra-${KERNEL_NEVRA}"
+
 sed -i 's|^ExecStart=.*|ExecStart=/usr/bin/bootc update --quiet|' /usr/lib/systemd/system/bootc-fetch-apply-updates.service
 sed -i 's|^OnUnitInactiveSec=.*|OnUnitInactiveSec=7d\nPersistent=true|' /usr/lib/systemd/system/bootc-fetch-apply-updates.timer
 sed -i 's|#AutomaticUpdatePolicy.*|AutomaticUpdatePolicy=stage|' /etc/rpm-ostreed.conf
 # dnf -y config-manager addrepo --from-repofile https://download.docker.com/linux/fedora/docker-ce.repo
 # dnf -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-systemctl enable bootc-fetch-apply-updates
+# The .timer, not the .service. bootc-fetch-apply-updates.service is static
+# (no [Install] section), so `systemctl enable bootc-fetch-apply-updates`
+# printed "unit files have no installation config", exited 0, and enabled
+# nothing -- unattended updates were never actually scheduled.
+systemctl enable bootc-fetch-apply-updates.timer
 # systemctl enable docker
 systemctl enable auditd
 systemctl enable firewalld

@@ -2,3 +2,9 @@ cosign.key
 _build_*
 output
 _build-*/**
+
+# Secure Boot module-signing private key. NEVER commit this -- anyone holding it
+# can sign kernel modules that your machine will load under Secure Boot.
+# The matching public certificate (secureboot/mok.der) IS committed.
+secureboot/mok.key
+secureboot/*.key

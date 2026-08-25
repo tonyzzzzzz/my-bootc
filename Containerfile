@@ -2,8 +2,11 @@
 FROM scratch AS ctx
 COPY build_files /build
 COPY system_files /files
+# Public Secure Boot certificate (not secret). The matching private key is
+# supplied at build time as a secret; see docs/secureboot.md.
+COPY secureboot /secureboot
 # Base Image
-FROM quay.io/fedora/fedora-bootc:43
+FROM quay.io/fedora/fedora-bootc:44
 
 ## Other possible base images include:
 # FROM ghcr.io/ublue-os/bazzite:latest
@@ -36,12 +39,6 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     /ctx/build/build.sh
 
-# RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-#    --mount=type=cache,dst=/var/cache \
-#    --mount=type=cache,dst=/var/log \
-#    --mount=type=tmpfs,dst=/tmp \
-#    /ctx/build/nvidia.sh
-
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
@@ -55,12 +52,30 @@ RUN --mount=type=cache,dst=/var/cache \
     /usr/bin/systemctl preset brew-setup.service && \
     /usr/bin/systemctl preset brew-update.timer && \
     /usr/bin/systemctl preset brew-upgrade.timer
+# The CUDA toolkit is multiple GiB of downloads; without the /var/cache mount
+# every byte of it would be baked into this layer on top of the installed files.
+#
+# mok.key signs the NVIDIA kernel modules for Secure Boot. It is a secret mount,
+# so it lives on tmpfs and never lands in a layer. Builds without it still
+# succeed; the modules are just unsigned and Secure Boot cannot be used.
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=secret,id=mok_key,target=/run/secrets/mok.key \
     /ctx/build/nvidia.sh
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
     /ctx/build/cleanup.sh
 
 ### LINTING
-## Verify final image and contents are correct.
-RUN bootc container lint
+## `bootc container lint` is deliberately NOT a RUN step here. During
+## `podman build` the /sys mount can expose securityfs, and the var-tmpfiles
+## lint then dies on /sys/kernel/security/ima/binary_runtime_measurements with
+## EPERM (tpm2-tss-fapi ships a tmpfiles.d entry for that path). The same lint
+## passes cleanly under `podman run`, so it runs in tests/verify-image.sh
+## instead -- which still gates the CI push, and additionally runs the smoke
+## tests. See `just verify`.

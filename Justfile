@@ -94,6 +94,15 @@ build $target_image=image_name $tag=default_tag:
         BUILD_ARGS+=("--build-arg" "SHA_HEAD_SHORT=$(git rev-parse --short HEAD)")
     fi
 
+    # Sign the NVIDIA kernel modules if the MOK private key is present locally,
+    # so local builds match what CI produces. Without it the build still works,
+    # but the modules are unsigned and Secure Boot cannot be used.
+    if [[ -f secureboot/mok.key ]]; then
+        BUILD_ARGS+=("--secret" "id=mok_key,src=secureboot/mok.key")
+    else
+        echo "note: secureboot/mok.key absent -- modules will be unsigned (see 'just mok-keygen')"
+    fi
+
     podman build \
         "${BUILD_ARGS[@]}" \
         --pull=newer \
@@ -293,6 +302,41 @@ spawn-vm rebuild="0" type="qcow2" ram="6G":
       --vsock=false --pass-ssh-key=false \
       -i ./output/**/*.{{ type }}
 
+
+# Generate the Secure Boot module-signing key pair (run once)
+[group('Secure Boot')]
+mok-keygen:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ -f secureboot/mok.key ]]; then
+        echo "secureboot/mok.key already exists; refusing to overwrite."
+        echo "Regenerating means re-enrolling the key on every machine."
+        exit 1
+    fi
+    mkdir -p secureboot
+    openssl req -new -x509 -newkey rsa:4096 -nodes -days 36500 \
+        -subj "/CN=$(git config user.name 2>/dev/null || echo bootc) module signing key/" \
+        -keyout secureboot/mok.key \
+        -outform DER -out secureboot/mok.der
+    chmod 0600 secureboot/mok.key
+    echo
+    echo "Generated:"
+    echo "  secureboot/mok.key  PRIVATE -- gitignored, add to GitHub as MOK_PRIVATE_KEY"
+    echo "  secureboot/mok.der  public  -- commit this"
+    echo
+    echo "Next:  gh secret set MOK_PRIVATE_KEY < secureboot/mok.key"
+    echo "Then see docs/secureboot.md to enroll it on the machine."
+
+# Smoke test a built image, same checks CI runs before pushing
+[group('Utility')]
+verify $target_image=image_name $tag=default_tag:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    podman run --rm \
+      --entrypoint /bin/bash \
+      -v "${PWD}/tests:/tests:ro,z" \
+      "${target_image}:${tag}" \
+      /tests/verify-image.sh
 
 # Runs shell check on all Bash scripts
 lint:
