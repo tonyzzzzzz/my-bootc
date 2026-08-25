@@ -140,6 +140,26 @@ else
     fail "nvidia kargs missing -- modeset will not be set"
 fi
 
+echo "== SELinux policy modules =="
+# semodule failures inside RPM %post scriptlets are only WARNINGS to dnf, so a
+# policy can go missing without failing the build. This bit the CI runner:
+# /etc/selinux on overlayfs made rename() return EXDEV, corrupting the policy
+# store, and greetd-selinux / swtpm-selinux silently did not install.
+SEMODULE_LIST="$(semodule -l 2>/dev/null)"
+for m in greetd swtpm nvidia-container container; do
+    if grep -qx "$m" <<<"${SEMODULE_LIST}"; then
+        ok "selinux module ${m}"
+    else
+        fail "selinux module ${m} missing -- a %post semodule likely failed silently"
+    fi
+done
+# Leftovers mean a commit aborted midway and later modules were dropped.
+if [[ -d /etc/selinux/targeted/tmp || -d /etc/selinux/targeted/previous ]]; then
+    fail "selinux policy store has leftover tmp/previous -- commits were aborting"
+else
+    ok "selinux policy store is clean"
+fi
+
 echo "== Third-party repos are disabled =="
 # Every repo we add during the build is meant to be switched off in the shipped
 # image. A COPR left enabled is a live third-party repo on the workstation.

@@ -190,8 +190,27 @@ dnf -y install --enablerepo=nvidia-container-toolkit \
     nvidia-container-toolkit
 
 curl --retry 3 -fsSL https://raw.githubusercontent.com/NVIDIA/dgx-selinux/master/bin/RHEL9/nvidia-container.pp -o /tmp/nvidia-container.pp
-semodule -i /tmp/nvidia-container.pp
+
+# Defensive: build.sh copies the policy store into the writable layer so
+# renames stay same-device, but clear any leftovers in case an earlier
+# scriptlet still managed to abort mid-commit.
+rm -rf /etc/selinux/targeted/tmp /etc/selinux/targeted/previous
+
+if ! semodule -i /tmp/nvidia-container.pp; then
+    echo "ERROR: failed to install the nvidia-container SELinux policy"
+    exit 1
+fi
 rm -f /tmp/nvidia-container.pp
+
+# semodule can report success while failing to commit the module, so confirm
+# it is actually registered. Capture the list rather than piping into grep -q,
+# which would SIGPIPE semodule and trip pipefail.
+SEMODULE_LIST="$(semodule -l)"
+grep -qx 'nvidia-container' <<<"${SEMODULE_LIST}" || {
+    echo "ERROR: nvidia-container policy did not register"
+    exit 1
+}
+echo "SELinux nvidia-container policy OK"
 
 ### Boot configuration
 # The official nvidia.conf already blacklists nouveau and nova-core; this adds

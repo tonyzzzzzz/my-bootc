@@ -2,6 +2,26 @@
 
 set -ouex pipefail
 
+### SELinux policy store: force it into the container's writable layer
+#
+# On the CI runner /etc/selinux comes from a lower overlayfs layer, and
+# rename() between layers returns EXDEV. libsemanage falls back to a
+# non-atomic copy, leaves tmp/ and previous/ behind, and then EVERY later
+# `semodule` fails with "Error while renaming tmp to active (Directory not
+# empty)". That silently drops policy modules installed by %post scriptlets --
+# greetd-selinux and swtpm-selinux both hit this -- because dnf only warns
+# about failing scriptlets. It is invisible unless you read the build log.
+#
+# Copying the tree in place puts it entirely in the upper layer so all
+# subsequent renames are same-device. Cheap, and a no-op on a local build
+# where /etc/selinux is already writable.
+if [ -d /etc/selinux ]; then
+    rm -rf /etc/selinux/targeted/tmp /etc/selinux/targeted/previous
+    cp -a /etc/selinux /etc/selinux.copyup
+    rm -rf /etc/selinux
+    mv /etc/selinux.copyup /etc/selinux
+fi
+
 ### Install packages
 
 systemctl enable systemd-timesyncd
